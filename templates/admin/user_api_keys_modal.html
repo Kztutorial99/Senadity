@@ -1,0 +1,94 @@
+
+<div class="mb-3">
+    <h6 class="text-primary">
+        <i class="fas fa-key me-2"></i>API Key for {{ user.username }}
+    </h6>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if user.api_key %}
+            <div class="mb-3">
+                <label class="form-label">API Key:</label>
+                <div class="input-group">
+                    <input type="text" class="form-control font-monospace" value="{{ user.api_key }}" readonly>
+                    <button class="btn btn-outline-secondary" onclick="copyApiKey('{{ user.api_key }}')">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Status:</strong>
+                    {% if user.api_key_enabled %}
+                        <span class="badge bg-success">Enabled</span>
+                    {% else %}
+                        <span class="badge bg-danger">Disabled</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <strong>Expiry:</strong>
+                    {% if user.api_key_expiry %}
+                        {{ user.api_key_expiry.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        <span class="text-muted">Never</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="d-flex gap-2 flex-wrap">
+                <form method="POST" action="{{ url_for('admin_toggle_api_key_status') }}" class="d-inline">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <input type="hidden" name="action" value="{{ 'disable' if user.api_key_enabled else 'enable' }}">
+                    <button type="submit" class="btn btn-sm btn-{{ 'warning' if user.api_key_enabled else 'success' }}">
+                        <i class="fas fa-{{ 'times' if user.api_key_enabled else 'check' }} me-1"></i>
+                        {{ 'Disable' if user.api_key_enabled else 'Enable' }}
+                    </button>
+                </form>
+                
+                <form method="POST" action="{{ url_for('admin_regenerate_api_key') }}" class="d-inline">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <button type="submit" class="btn btn-sm btn-primary" 
+                            onclick="return confirm('Regenerate API key for {{ user.username }}?')">
+                        <i class="fas fa-sync me-1"></i>Regenerate
+                    </button>
+                </form>
+                
+                <form method="POST" action="{{ url_for('admin_delete_api_key') }}" class="d-inline">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <input type="hidden" name="deletion_reason" value="Admin deleted">
+                    <button type="submit" class="btn btn-sm btn-danger" 
+                            onclick="return confirm('Delete API key for {{ user.username }}? This cannot be undone!')">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </form>
+            </div>
+        {% else %}
+            <div class="text-center py-3">
+                <i class="fas fa-key text-muted mb-2" style="font-size: 2rem;"></i>
+                <p class="text-muted">No API key generated for this user</p>
+                
+                <form method="POST" action="{{ url_for('admin_generate_api_key') }}" class="d-inline">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <input type="hidden" name="initial_status" value="enabled">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Generate API Key
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function copyApiKey(apiKey) {
+    navigator.clipboard.writeText(apiKey).then(function() {
+        alert('API key copied to clipboard!');
+    }, function() {
+        alert('Failed to copy API key');
+    });
+}
+</script>

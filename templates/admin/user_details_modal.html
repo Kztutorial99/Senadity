@@ -1,0 +1,148 @@
+
+<div class="row">
+    <div class="col-md-6">
+        <h6 class="text-primary mb-3">
+            <i class="fas fa-user me-2"></i>User Information
+        </h6>
+        
+        <table class="table table-sm">
+            <tr>
+                <td><strong>Username:</strong></td>
+                <td>{{ user.username }}</td>
+            </tr>
+            <tr>
+                <td><strong>Email:</strong></td>
+                <td>{{ user.email }}</td>
+            </tr>
+            <tr>
+                <td><strong>Status:</strong></td>
+                <td>
+                    {% if user.is_active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-danger">Inactive</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Premium:</strong></td>
+                <td>
+                    {% if user.is_premium %}
+                        <span class="badge bg-warning text-dark">Yes</span>
+                        {% if user.subscription_expiry %}
+                            <br><small class="text-muted">Expires: {{ user.subscription_expiry.strftime('%Y-%m-%d') }}</small>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge bg-secondary">No</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Balance:</strong></td>
+                <td>Rp {{ "{:,.0f}".format(user.balance) }}</td>
+            </tr>
+            <tr>
+                <td><strong>Created:</strong></td>
+                <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            <tr>
+                <td><strong>Last Login:</strong></td>
+                <td>
+                    {% if user.last_login %}
+                        {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                    {% else %}
+                        Never
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="col-md-6">
+        <h6 class="text-info mb-3">
+            <i class="fas fa-chart-bar me-2"></i>Statistics
+        </h6>
+        
+        <table class="table table-sm">
+            <tr>
+                <td><strong>Total Requests:</strong></td>
+                <td>{{ stats.total_requests }}</td>
+            </tr>
+            <tr>
+                <td><strong>Successful:</strong></td>
+                <td>{{ stats.successful_requests }}</td>
+            </tr>
+            <tr>
+                <td><strong>Success Rate:</strong></td>
+                <td>
+                    {% if stats.total_requests > 0 %}
+                        {{ "%.1f"|format((stats.successful_requests / stats.total_requests) * 100) }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Total Payments:</strong></td>
+                <td>{{ stats.total_payments }}</td>
+            </tr>
+            <tr>
+                <td><strong>Verified Payments:</strong></td>
+                <td>{{ stats.verified_payments }}</td>
+            </tr>
+            <tr>
+                <td><strong>Total Spent:</strong></td>
+                <td>Rp {{ "{:,.0f}".format(stats.total_spent) }}</td>
+            </tr>
+        </table>
+        
+        <div class="mt-3">
+            <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-edit me-1"></i>Edit User
+            </a>
+            
+            <button class="btn btn-warning btn-sm" onclick="togglePremium('{{ user.id }}')">
+                <i class="fas fa-crown me-1"></i>Toggle Premium
+            </button>
+            
+            <button class="btn btn-secondary btn-sm" onclick="toggleStatus('{{ user.id }}')">
+                <i class="fas fa-power-off me-1"></i>Toggle Status
+            </button>
+        </div>
+    </div>
+</div>
+
+{% if recent_requests %}
+<hr>
+<h6 class="text-success mb-3">
+    <i class="fas fa-history me-2"></i>Recent OTP Requests
+</h6>
+<div class="table-responsive">
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Provider</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Cost</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in recent_requests %}
+            <tr>
+                <td>{{ req.created_at.strftime('%m-%d %H:%M') }}</td>
+                <td>{{ req.provider.name if req.provider else 'N/A' }}</td>
+                <td>{{ req.phone_number }}</td>
+                <td>
+                    <span class="badge bg-{{ 'success' if req.status == 'success' else 'danger' }}">
+                        {{ req.status.title() }}
+                    </span>
+                </td>
+                <td>Rp {{ "{:,.0f}".format(req.cost or 0) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}

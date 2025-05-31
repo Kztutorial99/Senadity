@@ -1,0 +1,113 @@
+
+{% extends "base.html" %}
+
+{% block title %}Edit User - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">
+                                <i class="fas fa-user-edit text-primary me-2"></i>
+                                Edit User: {{ user.username }}
+                            </h3>
+                            <p class="text-muted mb-0">Modify user account details and settings</p>
+                        </div>
+                        <a href="{{ url_for('admin_user_management') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit text-info me-2"></i>
+                        User Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_update_user', user_id=user.id) }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" name="username" value="{{ user.username }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" value="{{ user.email }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">New Password (Leave blank to keep current)</label>
+                                <input type="password" class="form-control" name="password" placeholder="Enter new password">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Balance</label>
+                                <input type="number" class="form-control" name="balance" value="{{ user.balance }}" step="0.01">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Premium Expiry (if premium)</label>
+                                <input type="date" class="form-control" name="premium_expiry" 
+                                       value="{{ user.subscription_expiry.strftime('%Y-%m-%d') if user.subscription_expiry else '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status & Roles</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive" 
+                                           {{ 'checked' if user.is_active else '' }}>
+                                    <label class="form-check-label" for="isActive">Active Account</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_premium" id="isPremium" 
+                                           {{ 'checked' if user.is_premium else '' }}>
+                                    <label class="form-check-label" for="isPremium">Premium User</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_admin" id="isAdmin" 
+                                           {{ 'checked' if user.is_admin else '' }}>
+                                    <label class="form-check-label" for="isAdmin">Administrator</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Stats -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2">Account Information</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Created:</strong> {{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'N/A' }}</p>
+                                <p><strong>Last Login:</strong> {{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Login Method:</strong> {{ user.login_method if hasattr(user, 'login_method') else 'password' }}</p>
+                                <p><strong>API Key:</strong> {{ 'Active' if user.api_key else 'None' }}</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-secondary me-2" onclick="history.back()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

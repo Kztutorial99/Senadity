@@ -1,0 +1,436 @@
+
+{% extends "base.html" %}
+
+{% block title %}Dashboard - DeltaPro{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="dashboard-header mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="h3 mb-2">
+                <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                Dashboard
+            </h1>
+            <p class="text-muted mb-0">Welcome back, {{ user.username }}!</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="quick-actions d-flex flex-wrap gap-2 justify-content-md-end">
+                <a href="{{ url_for('otp_services') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-mobile-alt me-1"></i>
+                    <span class="d-none d-sm-inline">OTP Services</span>
+                </a>
+                {% if not user.is_premium %}
+                <a href="{{ url_for('premium') }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-crown me-1"></i>
+                    <span class="d-none d-sm-inline">Upgrade</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Dashboard Content -->
+<div class="row">
+    <!-- Left Column - Main Stats -->
+    <div class="col-lg-8 col-xl-9">
+        <!-- Account Overview Cards -->
+        <div class="row g-3 mb-4">
+            <!-- Balance Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="stat-card balance-card">
+                    <div class="stat-icon bg-success">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">Rp {{ "{:,.0f}".format(user.balance) }}</div>
+                        <div class="stat-label">Current Balance</div>
+                        <div class="stat-trend">
+                            <button class="btn btn-outline-success btn-sm mt-2" onclick="claimDailySaldo()">
+                                <i class="fas fa-gift me-1"></i>Claim Daily
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Type Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="stat-card account-card">
+                    <div class="stat-icon {{ 'bg-warning' if user.is_premium else 'bg-secondary' }}">
+                        <i class="fas {{ 'fa-crown' if user.is_premium else 'fa-user' }}"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">
+                            {{ 'Premium' if user.is_premium else 'Free' }}
+                        </div>
+                        <div class="stat-label">Account Type</div>
+                        {% if user.is_premium and user.subscription_expiry %}
+                        <div class="stat-trend">
+                            <small class="text-muted">
+                                Expires: {{ user.subscription_expiry.strftime('%d/%m/%Y') }}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Requests Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="stat-card requests-card">
+                    <div class="stat-icon bg-info">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ recent_requests|length }}</div>
+                        <div class="stat-label">Recent Requests</div>
+                        <div class="stat-trend">
+                            {% set success_count = recent_requests|selectattr('status', 'equalto', 'success')|list|length %}
+                            <small class="text-success">
+                                {{ success_count }}/{{ recent_requests|length }} Success
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="stat-card messages-card">
+                    <div class="stat-icon bg-primary">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ unread_messages }}</div>
+                        <div class="stat-label">Unread Messages</div>
+                        <div class="stat-trend">
+                            <a href="{{ url_for('messages') }}" class="btn btn-outline-primary btn-sm mt-2">
+                                <i class="fas fa-eye me-1"></i>View All
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Status Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="stat-card api-card">
+                    <div class="stat-icon {{ 'bg-success' if user.api_key else 'bg-secondary' }}">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">
+                            {{ 'Active' if user.api_key else 'Inactive' }}
+                        </div>
+                        <div class="stat-label">API Status</div>
+                        <div class="stat-trend">
+                            <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary btn-sm mt-2">
+                                <i class="fas fa-cog me-1"></i>Manage
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="stat-card actions-card">
+                    <div class="stat-icon bg-warning">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">Actions</div>
+                        <div class="stat-label">Quick Access</div>
+                        <div class="stat-trend">
+                            <div class="btn-group-vertical w-100 mt-2">
+                                <a href="{{ url_for('otp_services') }}" class="btn btn-outline-warning btn-sm">
+                                    <i class="fas fa-mobile-alt me-1"></i>Request OTP
+                                </a>
+                                <a href="{{ url_for('profile') }}" class="btn btn-outline-warning btn-sm mt-1">
+                                    <i class="fas fa-user me-1"></i>Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Section -->
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent OTP Requests
+                </h5>
+                <a href="{{ url_for('otp_services') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>New Request
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0">Provider</th>
+                                <th class="border-0 d-none d-md-table-cell">Phone</th>
+                                <th class="border-0">Status</th>
+                                <th class="border-0 d-none d-lg-table-cell">Cost</th>
+                                <th class="border-0">Date</th>
+                                <th class="border-0 d-none d-md-table-cell">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in recent_requests %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="provider-icon me-2">
+                                            <i class="fas fa-mobile-alt text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold">{{ request.provider.display_name if request.provider else 'Unknown' }}</div>
+                                            <small class="text-muted d-md-none">{{ request.phone_number[:3] }}***{{ request.phone_number[-3:] if request.phone_number|length > 6 else request.phone_number }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="d-none d-md-table-cell">
+                                    <code class="small">{{ request.phone_number[:3] }}***{{ request.phone_number[-3:] if request.phone_number|length > 6 else request.phone_number }}</code>
+                                </td>
+                                <td>
+                                    {% if request.status == 'success' %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Success
+                                    </span>
+                                    {% elif request.status == 'failed' %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times me-1"></i>Failed
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-clock me-1"></i>Pending
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="d-none d-lg-table-cell">
+                                    <span class="text-muted">Rp {{ "{:,.0f}".format(request.cost or 0) }}</span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ request.created_at.strftime('%d/%m %H:%M') }}
+                                    </small>
+                                </td>
+                                <td class="d-none d-md-table-cell">
+                                    {% if request.otp_code %}
+                                    <button class="btn btn-outline-primary btn-sm" onclick="copyToClipboard('{{ request.otp_code }}', this)">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-mobile-alt fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No OTP requests yet</h6>
+                    <p class="text-muted">Start by requesting your first OTP</p>
+                    <a href="{{ url_for('otp_services') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Request OTP
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Sidebar Info -->
+    <div class="col-lg-4 col-xl-3">
+        <!-- Account Summary -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-user-circle me-2"></i>Account Summary
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="account-summary">
+                    <div class="summary-item">
+                        <label>Username:</label>
+                        <div class="value fw-semibold">{{ user.username }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <label>Email:</label>
+                        <div class="value">{{ user.email or 'Not set' }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <label>Member Since:</label>
+                        <div class="value">{{ user.created_at.strftime('%B %Y') }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <label>Login Method:</label>
+                        <div class="value">
+                            {% if user.login_method == 'facebook' %}
+                            <i class="fab fa-facebook text-primary me-1"></i>Facebook
+                            {% else %}
+                            <i class="fas fa-key text-secondary me-1"></i>Password
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Usage Stats
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="usage-stats">
+                    {% set total_requests = recent_requests|length %}
+                    {% set success_requests = recent_requests|selectattr('status', 'equalto', 'success')|list|length %}
+                    {% set success_rate = ((success_requests / total_requests) * 100) if total_requests > 0 else 0 %}
+                    
+                    <div class="stat-item">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-muted">Success Rate</span>
+                            <span class="fw-semibold">{{ "%.1f"|format(success_rate) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: {{ success_rate }}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-item mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-muted">Balance Usage</span>
+                            <span class="fw-semibold">{{ "{:,.0f}".format(user.balance) }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            {% set balance_percentage = (user.balance / 100000) * 100 if user.balance < 100000 else 100 %}
+                            <div class="progress-bar bg-primary" style="width: {{ balance_percentage }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('otp_services') }}" class="btn btn-primary">
+                        <i class="fas fa-mobile-alt me-2"></i>Request OTP
+                    </a>
+                    <a href="{{ url_for('messages') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-envelope me-2"></i>Messages
+                        {% if unread_messages > 0 %}
+                        <span class="badge bg-danger ms-1">{{ unread_messages }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-user me-2"></i>Profile
+                    </a>
+                    {% if not user.is_premium %}
+                    <a href="{{ url_for('premium') }}" class="btn btn-warning">
+                        <i class="fas fa-crown me-2"></i>Upgrade to Premium
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Panel Stats (for admins only) -->
+{% if user.is_admin %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card shadow-sm border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>Admin Quick Stats
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="admin-stat text-center">
+                            <div class="admin-stat-value text-primary">{{ stats.total_users }}</div>
+                            <div class="admin-stat-label">Total Users</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="admin-stat text-center">
+                            <div class="admin-stat-value text-warning">{{ stats.premium_users }}</div>
+                            <div class="admin-stat-label">Premium Users</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="admin-stat text-center">
+                            <div class="admin-stat-value text-info">{{ stats.total_requests }}</div>
+                            <div class="admin-stat-label">Total Requests</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="admin-stat text-center">
+                            <div class="admin-stat-value text-danger">{{ stats.pending_payments }}</div>
+                            <div class="admin-stat-label">Pending Payments</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('admin_panel') }}" class="btn btn-warning">
+                        <i class="fas fa-cog me-2"></i>Go to Admin Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Daily saldo claim function
+function claimDailySaldo() {
+    fetch('/claim-daily-saldo', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            // Update balance display
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Error claiming daily saldo', 'error');
+    });
+}
+
+// Auto refresh every 5 minutes
+setInterval(() => {
+    location.reload();
+}, 300000);
+</script>
+{% endblock %}
