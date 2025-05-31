@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Senadity Control Panel
 
 <p align="center">
@@ -27,3 +28,6 @@
 =======
 # Senadity
 >>>>>>> 5476c9390d31b6726a100ebb29bd6663b85a42a6
+=======
+# Senadity
+>>>>>>> 39f4c3128225ea01da526b3e75b67549c9a89004
